@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 _IDENTIFIER = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,127}$")
-_PROPERTY_ID = re.compile(r"^\$?[A-Za-z][A-Za-z0-9_.-]{0,127}$")
+_PROPERTY_ID = re.compile(r"^\$?[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$")
 _TYPE_URL = re.compile(r"^sbs(?:::[A-Za-z0-9_.-]+)+$")
 _COLOR_SPACE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_. +()-]{0,127}$")
 

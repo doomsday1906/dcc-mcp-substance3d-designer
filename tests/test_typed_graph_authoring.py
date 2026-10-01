@@ -528,3 +528,48 @@ def test_typed_public_calls_build_and_verify_a_small_graph(monkeypatch):
     assert state["context"]["graph"]["node_count"] == 3
     assert state["context"]["graph"]["connections"][0]["target_node"] == "blend"
     assert state["context"]["graph"]["outputs"][0]["usages"][0]["usage"] == "baseColor"
+
+
+@pytest.mark.parametrize(
+    "identifier",
+    [
+        "2d_shape_size",
+        "2d_shape_size_random",
+        "scale",
+        "$outputsize",
+    ],
+)
+def test_require_property_accepts_digit_led_and_existing_forms(identifier):
+    assert graph_authoring.require_property(identifier) == identifier
+
+
+@pytest.mark.parametrize(
+    "identifier",
+    [
+        "../evil",
+        "a/b",
+        "a b",
+        "a\nb",
+        "a\tb",
+        "a\rb",
+        "a;b",
+        "a|b",
+        "foo$bar",
+        ".scale",
+        "-scale",
+        "$",
+        "",
+        "a" * 129,
+        "$" + "a" * 129,
+    ],
+)
+def test_require_property_rejects_outside_bounded_grammar(identifier):
+    with pytest.raises(graph_authoring.GraphAuthoringError) as exc_info:
+        graph_authoring.require_property(identifier)
+    assert exc_info.value.code == "INVALID_PROPERTY_ID"
+
+
+def test_require_identifier_still_rejects_digit_led_ids():
+    with pytest.raises(graph_authoring.GraphAuthoringError) as exc_info:
+        graph_authoring.require_identifier("2d_shape_size")
+    assert exc_info.value.code == "INVALID_IDENTIFIER"
