@@ -11,7 +11,7 @@ Each entry records one retained downstream divergence. This is a ledger, not his
 - ID: D001
 - Title: accept digit-led native Designer property identifiers
 - Upstream base commit: 1bbcb6739969c785beb449ace3609f55f1bd7578 (v0.8.1)
-- Downstream commit: _pending (filled on patch commit)_
+- Downstream commit: 281dd9e9f3378c41d603df7bfbc671cf71716d82 (`fix: allow digit-led Designer property identifiers`)
 - Affected files:
   - `src/dcc_mcp_substance3d_designer/graph_authoring.py`
   - `tests/test_typed_graph_authoring.py`
