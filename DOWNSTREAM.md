@@ -35,7 +35,7 @@ Each entry records one retained downstream divergence. This is a ledger, not his
 - ID: D002
 - Title: describe exact native edge properties of one shipped resource instance via isolated inspection
 - Upstream base commit: 1bbcb6739969c785beb449ace3609f55f1bd7578 (v0.8.1)
-- Downstream commit: TBD (`feat: describe shipped resource edge properties without instantiation`)
+- Downstream commit: ff01fb6df8481c0c02863640d5cddf818917dfe7 (`feat: describe shipped resource edge properties without instantiation`)
 - Affected files:
   - `src/dcc_mcp_substance3d_designer/graph_resources.py`
   - `src/dcc_mcp_substance3d_designer/skills/designer-session/scripts/describe_shipped_resource_properties.py`
