@@ -105,3 +105,94 @@ def open_package(path: str) -> dict[str, Any]:
     if package is None or Path(package.getFilePath()).resolve() != resolved:
         raise api.GraphAuthoringError("Package open readback failed", "PACKAGE_OPEN_FAILED")
     return {"package_path": str(resolved), "saved": not package.isModified(), "already_open": False}
+
+
+def describe_shipped_resource_properties(package_name: str, resource_id: str) -> dict[str, Any]:
+    """Describe exact native edge properties of one shipped resource instance.
+
+    Inspection for preflight: reports native isConnectable(), isReadOnly(),
+    and property types for every instance input/output as the Designer SDK
+    would expose them on a created node. The production graph and its package
+    are never touched: the resource is instanced once in an isolated temporary
+    package/graph that is deleted and unloaded before return. Shipped packages
+    only, mirroring create_resource_node identity rules. Non-graph resources
+    fail closed.
+    """
+    import re
+
+    from sd.api.sdproperty import SDPropertyCategory
+
+    from .graph_inspection import describe_property
+
+    if not isinstance(package_name, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,128}\.sbs", package_name):
+        raise api.GraphAuthoringError("Expected a shipped .sbs package filename", "INVALID_PACKAGE_NAME")
+    resource_id = api.require_identifier(resource_id, "resource_id")
+    app = api.application()
+    from sd.api.sdapplication import SDApplicationPath
+    from sd.api.sbs.sdsbscompgraph import SDSBSCompGraph
+    from sd.api.sdgraph import SDGraph
+
+    root = (Path(app.getPath(SDApplicationPath.DefaultResourcesDir)) / "packages").resolve()
+    path = (root / package_name).resolve()
+    if path.parent != root or not path.is_file():
+        raise api.GraphAuthoringError("Shipped resource package not found", "RESOURCE_NOT_FOUND")
+    package = app.getPackageMgr().loadUserPackage(str(path), True)
+    if package is None:
+        raise api.GraphAuthoringError("Shipped resource package not found", "RESOURCE_NOT_FOUND")
+    resource = package.findResourceFromUrl(resource_id)
+    if resource is None:
+        for candidate in api.items(package.getChildrenResources(True)):
+            try:
+                if candidate.getIdentifier() == resource_id:
+                    resource = candidate
+                    break
+            except Exception:
+                continue
+    if resource is None:
+        raise api.GraphAuthoringError("Resource identifier not found in package", "RESOURCE_NOT_FOUND")
+    if not isinstance(resource, SDGraph):
+        raise api.GraphAuthoringError("Resource is not a graph", "RESOURCE_NOT_GRAPH")
+    temp_package = app.getPackageMgr().newUserPackage()
+    if temp_package is None:
+        raise api.GraphAuthoringError("Designer could not create an inspection package", "PACKAGE_CREATE_FAILED")
+    temp_graph = None
+    node = None
+    try:
+        temp_graph = SDSBSCompGraph.sNew(temp_package)
+        if temp_graph is None:
+            raise api.GraphAuthoringError("Designer could not create an inspection graph", "GRAPH_CREATE_FAILED")
+        node = temp_graph.newInstanceNode(resource)
+        if node is None:
+            raise api.GraphAuthoringError("Designer rejected resource instance", "NODE_TYPE_UNAVAILABLE")
+        inputs = [describe_property(prop) for prop in api.items(node.getProperties(SDPropertyCategory.Input))]
+        outputs = [describe_property(prop) for prop in api.items(node.getProperties(SDPropertyCategory.Output))]
+        if len(inputs) > 4096 or len(outputs) > 4096:
+            raise api.GraphAuthoringError("Resource property metadata exceeds the bounded limit", "RESOURCE_METADATA_BOUND_EXCEEDED")
+        return {
+            "package_name": package_name,
+            "resource_id": resource_id,
+            "resource_url": resource.getUrl(),
+            "inputs": inputs,
+            "outputs": outputs,
+        }
+    finally:
+        try:
+            if node is not None and temp_graph is not None:
+                try:
+                    temp_graph.deleteNode(node)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        try:
+            if temp_graph is not None:
+                try:
+                    temp_graph.delete()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        try:
+            app.getPackageMgr().unloadUserPackage(temp_package)
+        except Exception:
+            pass
