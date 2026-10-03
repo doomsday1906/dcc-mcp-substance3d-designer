@@ -7,6 +7,16 @@ This is a thin downstream compatibility/reliability fork of
 
 - `main` mirrors upstream and takes no downstream-only commits.
 - Downstream work lives on supported branches (e.g. `lab-supported/0.8.1`).
+- `origin` contains only `main` plus active `lab-supported/*` branches. Do not
+  mirror upstream `agent/*`, CI, release-automation, or other transient branches
+  into the downstream fork.
+- Track upstream `main` by default. Fetch an exact upstream side branch only for
+  a bounded investigation, then remove its local tracking ref when that need
+  ends.
+- Do not create ad-hoc `backup-*`, `mission-*`, `agent/*`, task, or "safety"
+  branches in the canonical checkout. Use exact commit identities for rollback;
+  when isolation is materially needed, use the AgentWorkspace-owned managed
+  worktree/branch lifecycle and retire the temporary branch at closure.
 - Upstream history stays visible; do not rewrite shared history.
 
 ## Change discipline
