@@ -70,7 +70,7 @@ Each entry records one retained downstream divergence. This is a ledger, not his
 - ID: D003
 - Title: allow edges to connectable inputs whose values are read-only
 - Upstream base commit: 1bbcb6739969c785beb449ace3609f55f1bd7578 (v0.8.1)
-- Downstream commit: pending (candidate uncommitted; publication pending)
+- Downstream commit: a613163a03978fb3cb312c3bc3e49a954c071afb (`fix: allow edges to read-only connectable inputs`)
 - Affected files:
   - `src/dcc_mcp_substance3d_designer/graph_connections.py`
   - `tests/test_graph_contracts.py`
