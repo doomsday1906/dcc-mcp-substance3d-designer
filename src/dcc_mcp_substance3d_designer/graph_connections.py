@@ -79,11 +79,6 @@ def validate_connection(
     source, output, target, input_ = _ports(graph, source_node, source_property, target_node, target_property)
     if not output.isConnectable() or not input_.isConnectable():
         raise api.GraphAuthoringError("Both properties must be connectable", "PORT_NOT_CONNECTABLE")
-    # Designer texture inputs are value-read-only: pixels come from an edge,
-    # rather than an assignable SDValue. isConnectable governs their wiring.
-    texture_input = any(item["id"] == "SDTypeTexture" for item in property_types(input_))
-    if input_.isReadOnly() and not texture_input:
-        raise api.GraphAuthoringError("Target input is read-only", "PROPERTY_READ_ONLY")
     if not _compatible(output, input_):
         raise api.GraphAuthoringError("Port types are incompatible without conversion", "PORT_TYPE_MISMATCH")
     requested = (source_node, source_property, target_node, target_property)

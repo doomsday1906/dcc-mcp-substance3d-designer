@@ -170,7 +170,6 @@ def test_exact_connect_readback_idempotence_and_disconnect_fanout(graph):
         ("missing", "PORT_NOT_FOUND"),
         ("type", "PORT_TYPE_MISMATCH"),
         ("unknown", "PORT_TYPE_UNAVAILABLE"),
-        ("readonly", "PROPERTY_READ_ONLY"),
         ("not_connectable", "PORT_NOT_CONNECTABLE"),
         ("occupied", "INPUT_CONNECTED"),
         ("cycle", "GRAPH_CYCLE"),
@@ -184,8 +183,6 @@ def test_connection_preflight_prevents_mutation(graph, case, code):
         target.inputs[0].type_id = "texture"
     if case == "unknown":
         target.inputs[0].type_id = None
-    if case == "readonly":
-        target.inputs[0].readonly = True
     if case == "not_connectable":
         target.inputs[0].connectable = False
     if case == "occupied":
@@ -259,6 +256,22 @@ def test_value_readonly_texture_input_accepts_and_verifies_connection(graph):
     target.inputs[0].readonly = True
     result = connections.connect_nodes("100", "out", "200", "in", "graph-A")
     assert result["target_node"] == "200"
+    assert len(target.getPropertyConnections(target.inputs[0])) == 1
+
+
+def test_read_only_connectable_integer_input_accepts_and_verifies_edge(graph):
+    source, target = graph.getNodes()[:2]
+    source.outputs[0].type_id = "int"
+    target.inputs[0].type_id = "int"
+    target.inputs[0].readonly = True
+    assert target.inputs[0].isReadOnly() is True
+    assert target.inputs[0].isConnectable() is True
+    result = connections.connect_nodes("100", "out", "200", "in", "graph-A")
+    assert not result["already_connected"]
+    assert [connections.edge(edge) for edge in target.getPropertyConnections(target.inputs[0])] == [
+        ("100", "out", "200", "in")
+    ]
+    assert connections.connect_nodes("100", "out", "200", "in", "graph-A")["already_connected"]
     assert len(target.getPropertyConnections(target.inputs[0])) == 1
 
 
